@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+      <title>Basics on Concourse </title>
+      <generator uri="https://hugo.spf13.com">Hugo</generator>
+    <link>https://concourse.github.io/basics/index.xml</link>
+    <language>en-us</language>
+    
+    
+    <updated>Tue, 01 Jan 2008 00:00:00 UTC</updated>
+    
+    <item>
+      <title>What &amp; Why</title>
+      <link>https://concourse.github.io/basics/what-and-why</link>
+      <pubDate>Tue, 01 Jan 2008 00:00:00 UTC</pubDate>
+      
+      <guid>https://concourse.github.io/basics/what-and-why</guid>
+      <description>
+
+&lt;h1 id=&#34;toc_0&#34;&gt;What &amp;amp; Why&lt;/h1&gt;
+
+&lt;p&gt;There are countless CI options out there. Transitioning from one CI
+infrastructure to another can be a huge investment.&lt;/p&gt;
+
+&lt;p&gt;Why should you care about Concourse?&lt;/p&gt;
+
+&lt;h2 id=&#34;toc_1&#34;&gt;Easy to learn&lt;/h2&gt;
+
+&lt;p&gt;All of Concourse builds on the following primitives:&lt;/p&gt;
+
+&lt;dl&gt;
+  &lt;dt&gt;resource&lt;/dt&gt;
+    &lt;dd&gt;
+      A resource is any entity that can be checked for new versions, pulled
+      down at a specific version, and/or pushed up to generate new versions. A
+      common example would be a git repository.
+    &lt;/dd&gt;
+
+  &lt;dt&gt;job&lt;/dt&gt;
+    &lt;dd&gt;
+      A job is a predefined configuration for builds that will be executed. It
+      has inputs and outputs, and typically executes when any of its input
+      resources change.
+    &lt;/dd&gt;
+
+  &lt;dt&gt;build&lt;/dt&gt;
+    &lt;dd&gt;
+      A build is an execution of some program in a container. Before starting,
+      all of its input resources are fetched, and upon the program&#39;s successful
+      completion, all of its outputs are performed.
+    &lt;/dd&gt;
+&lt;/dl&gt;
+
+&lt;p&gt;Like files and pipes in Unix, Concourse aims to build an expressive system with
+as few distinct moving parts as possible.&lt;/p&gt;
+
+&lt;p&gt;Of course, there&amp;rsquo;s a bit more to it than that. Head on over to
+&lt;a href=&#34;/concepts&#34;&gt;Concepts&lt;/a&gt; to learn more.&lt;/p&gt;
+
+&lt;h2 id=&#34;toc_2&#34;&gt;Reproducible&lt;/h2&gt;
+
+&lt;p&gt;Concourse does not require a wizard to configure. It is designed to be
+statically configurable via a single file, that is no larger than it has to be.
+When your Concourse deployment burns down, it doesn&amp;rsquo;t matter. Deploy it again
+somewhere else, in the exact same configuration.&lt;/p&gt;
+
+&lt;p&gt;An entire arbitrarily complicated pipeline can be declared in a single
+human-readable config file, and you&amp;rsquo;ll &lt;em&gt;like it&lt;/em&gt;.&lt;/p&gt;
+
+&lt;p&gt;With BOSH, deploying a Concourse cluster is easy regardless of the size of the
+cluster. Scaling up to handle higher workloads is as trivial as bumping the
+Turbine instance count.&lt;/p&gt;
+
+&lt;h2 id=&#34;toc_3&#34;&gt;Unintrusive&lt;/h2&gt;
+
+&lt;p&gt;Concourse is optimized for quickly navigating to the pages you most care about.
+From the main page, the shortest path from a pipeline view to the console
+output of a job&amp;rsquo;s latest failing build is a single click.&lt;/p&gt;
+
+&lt;p&gt;From there, the job&amp;rsquo;s entire build history is displayed, and every input for
+the job is listed out, with any new inputs highlighted.&lt;/p&gt;
+
+&lt;p&gt;Console output has colors highlighted and supports unicode. It emulates your
+terminal and gets out of your way.&lt;/p&gt;
+
+&lt;h2 id=&#34;toc_4&#34;&gt;Build isolation&lt;/h2&gt;
+
+&lt;p&gt;Every build is run in a container, completely isolated from other builds.&lt;/p&gt;
+
+&lt;p&gt;Never worry about other teams clobbering your finely tuned global state. Never
+again wipe down your worker agents after weeks of use.&lt;/p&gt;
+
+&lt;p&gt;The base image for each job&amp;rsquo;s builds is configurable, and supports Docker
+images. Control your build&amp;rsquo;s runtime environment as part of your project that
+needs it, not your worker VMs.&lt;/p&gt;
+
+&lt;h2 id=&#34;toc_5&#34;&gt;Local iteration&lt;/h2&gt;
+
+&lt;p&gt;Everyone knows this dance: set up CI, push, build fails. Fix config, push,
+build fails&amp;hellip; 20 commits later, success.&lt;/p&gt;
+
+&lt;p&gt;Concourse&amp;rsquo;s support for running builds locally eliminates this pesky workflow,
+and allows you to trust that your build running locally runs &lt;em&gt;exactly&lt;/em&gt; the same
+way that it runs in your CI system.&lt;/p&gt;
+
+&lt;p&gt;The workflow then becomes: set up CI, configure build locally, &lt;code&gt;fly&lt;/code&gt;, build
+fails (we can&amp;rsquo;t fix that), fix things up, &lt;code&gt;fly&lt;/code&gt;&amp;hellip;&lt;/p&gt;
+
+&lt;p&gt;At the end of this, instead of 20 junk commits pushed to your repo, you&amp;rsquo;ve
+figured out a configuration for both running locally and running in CI.&lt;/p&gt;
+
+&lt;h2 id=&#34;toc_6&#34;&gt;Bootstrapped&lt;/h2&gt;
+
+&lt;p&gt;Proving all of this works is hard without having a real use case. Thankfully,
+Concourse itself is a sufficiently large piece of work that its own pipeline
+has been plenty to cut its teeth on.&lt;/p&gt;
+
+&lt;p&gt;At the start of the pipeline are jobs configured for each individual component.
+These jobs simply run their unit tests, and are the first line of defense.&lt;/p&gt;
+
+&lt;p&gt;The versions of each component that make it through this stage are then fed
+into an integration job that literally spins every component up in a room and
+makes them talk to each other.&lt;/p&gt;
+
+&lt;p&gt;From there, the Docker images used for the resource types within the
+integration build are shipped, and the ref of each successful resource is
+bumped in the BOSH release repository.&lt;/p&gt;
+
+&lt;p&gt;Because the release repo changed, a Deploy job kicks in, which literally
+&lt;em&gt;deploys to the same instance running the Deploy job&lt;/em&gt;. Concourse&amp;rsquo;s own
+pipeline drives out the need for deploys to not trash every running build.&lt;/p&gt;
+
+&lt;p&gt;After a deploy succeeds, the Concourse version number resource is bumped, and
+new artifacts are available for shipping into a new release.&lt;/p&gt;
+
+&lt;p&gt;At any point in time, I can walk in and trigger the &lt;code&gt;shipit&lt;/code&gt; job, which takes
+the most recently built release candidate, bumps its version resource to a
+final number (&lt;code&gt;0.3.0.rc.3&lt;/code&gt; to &lt;code&gt;0.3.0&lt;/code&gt;), and uploads a &lt;code&gt;.tgz&lt;/code&gt; to the S3 bucket
+containing final releases.&lt;/p&gt;
+
+&lt;p&gt;Though the above chain of events may sound complicated, in reality it is just a
+bunch of simple functions of inputs &amp;rarr; outputs.&lt;/p&gt;
+
+&lt;p&gt;The way I&amp;rsquo;ve described this pipeline flow is precisely how each job is
+configured, and automatically visualized on the main page:&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&#34;/images/concourse-pipeline.png&#34;&gt;&lt;img class=&#34;pipeline&#34; src=&#34;/images/concourse-pipeline.png&#34; alt=&#34;Concourse Pipeline&#34; /&gt;&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;Initially this array of squares may be a lot to take in, but on your own
+projects, where &lt;em&gt;reality&lt;/em&gt; is this complicated, you&amp;rsquo;ll appreciate the
+straightforward expression of every relationship.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Getting Started</title>
+      <link>https://concourse.github.io/basics/getting-started</link>
+      <pubDate>Tue, 01 Jan 2008 00:00:00 UTC</pubDate>
+      
+      <guid>https://concourse.github.io/basics/getting-started</guid>
+      <description>&lt;p&gt;BOSH.&lt;/p&gt;
+</description>
+    </item>
+    
+  </channel>
+</rss>

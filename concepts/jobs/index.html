@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <title>Jobs</title>
+        <link type="text/css" rel="stylesheet" href="/css/main.css" />
+    </head>
+    <body>
+
+
+<div id="main">
+    <div id="content">
+        
+
+<h1 id="toc_0">Jobs</h1>
+
+<p>A job is a static configuration that describes how builds will be executed. A
+job declares inputs and outputs.</p>
+
+<h2 id="toc_1">Inputs</h2>
+
+<p>A job&rsquo;s inputs are all resources, and when new versions are detected for any of
+them, a build of the job is created.</p>
+
+<p>Here&rsquo;s what a job configured to run unit tests will often look like:</p>
+
+<div class="highlight"><pre><span class="l-Scalar-Plain">name</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">banana-unit</span>
+<span class="l-Scalar-Plain">build</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">banana/build.yml</span>
+<span class="l-Scalar-Plain">inputs</span><span class="p-Indicator">:</span>
+  <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">resources</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">banana</span>
+</pre></div>
+
+<p>This job will continuously monitor <code>banana</code> for new versions, automatically
+triggering builds of them when they are found.</p>
+
+<p>The build that is executed is configured via <code>build.yml</code> in the fetched
+<code>banana</code> resource. This is a common pattern: resources that contain unit tests
+should configure their tests in their own repo.</p>
+
+<h2 id="toc_2">Outputs</h2>
+
+<p>When a build succeeds, all of its input versioned resources are implicitly
+recorded as outputs of the job.</p>
+
+<p>A job may however configure explicit outputs, which add to the output set,
+overriding the implicit versions.</p>
+
+<p>For example, a job may pull in a repo that contains a <code>Dockerfile</code>, and push a
+Docker image when its tests go green:</p>
+
+<div class="highlight"><pre><span class="l-Scalar-Plain">name</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">banana-image</span>
+<span class="l-Scalar-Plain">build</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">banana/unit.yml</span>
+<span class="l-Scalar-Plain">inputs</span><span class="p-Indicator">:</span>
+  <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">resource</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">banana</span>
+<span class="l-Scalar-Plain">outputs</span><span class="p-Indicator">:</span>
+  <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">resource</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">banana-image</span>
+    <span class="l-Scalar-Plain">params</span><span class="p-Indicator">:</span>
+      <span class="l-Scalar-Plain">build</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">banana</span>
+</pre></div>
+
+<p>When builds complete, all outputs are executed in parallel (as they should have
+no inter-relationships). If any outputs fail to execute, the build errors
+(overriding the otherwise successful status).</p>
+
+<h3 id="toc_3">Depending on other job&rsquo;s outputs</h3>
+
+<p>It is often useful to have a single version of a resource propagate through a
+&lsquo;pipeline&rsquo;, with the guarantee that the same tested version is making its way
+through.</p>
+
+<p>This is done by adding a <code>passed:</code> constraint to a job&rsquo;s inputs, like so:</p>
+
+<div class="highlight"><pre><span class="l-Scalar-Plain">This applies to any number of inputs. What&#39;s more, inputs whose constraints</span>
+<span class="l-Scalar-Plain">specify the same job are guaranteed to come from the same build of the job.</span>
+
+<span class="l-Scalar-Plain">A more complicated example</span><span class="p-Indicator">:</span>
+
+<span class="l-Scalar-Plain">&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;</span>
+<span class="l-Scalar-Plain">&lt;/pre&gt;&lt;/div&gt;</span>
+
+<span class="l-Scalar-Plain">name</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">shipit</span>
+<span class="l-Scalar-Plain">build</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">mything/shipit.yml</span>
+<span class="l-Scalar-Plain">inputs</span><span class="p-Indicator">:</span>
+  <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">resource</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">a</span>
+    <span class="l-Scalar-Plain">passed</span><span class="p-Indicator">:</span> <span class="p-Indicator">[</span><span class="nv">a-unit</span><span class="p-Indicator">,</span> <span class="nv">integration</span><span class="p-Indicator">]</span>
+  <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">resource</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">b</span>
+    <span class="l-Scalar-Plain">passed</span><span class="p-Indicator">:</span> <span class="p-Indicator">[</span><span class="nv">b-unit</span><span class="p-Indicator">,</span> <span class="nv">integration</span><span class="p-Indicator">]</span>
+  <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">resource</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">version</span>
+    <span class="l-Scalar-Plain">passed</span><span class="p-Indicator">:</span> <span class="p-Indicator">[</span><span class="nv">integration</span><span class="p-Indicator">]</span>
+</pre></div>
+
+<p>The above configuration guarantees that the <code>shipit</code> job will only trigger with
+versions of <code>a</code>, <code>b</code>, and <code>version</code> that have passed <code>integration</code> together,
+with the same version of <code>a</code> passing <code>a-unit</code> and the same version of <code>b</code>
+passing <code>b-unit</code>. This is a very succinct way to provide &ldquo;fan-in&rdquo; at the end of
+more involved pipelines, where everything comes together and must be correlated
+again.</p>
+
+    </div>
+</div>
+
+<div id="sidebar">
+    <h4>On this page:</h4>
+    <nav id="TableOfContents">
+<ul>
+<li><a href="#toc_0">Jobs</a>
+<ul>
+<li><a href="#toc_1">Inputs</a></li>
+<li><a href="#toc_2">Outputs</a>
+<ul>
+<li><a href="#toc_3">Depending on other job&rsquo;s outputs</a></li>
+</ul></li>
+</ul></li>
+</ul>
+</nav>
+</div>
+
+    </body>
+</html>
+
