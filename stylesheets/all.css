@@ -1,3 +1,5 @@
+@charset "utf-8";
+
 body,div,dl,dt,dd,ul,ol,li,h1,h2,h3,h4,h5,h6,pre,code,form,fieldset,legend,input,textarea,p,blockquote,th,td { margin: 0; padding: 0; }
 table { border-collapse: collapse; border-spacing: 0; }
 fieldset,img { border: 0; }
@@ -21,8 +23,10 @@ body {
     height: 100%;
 }
 
-pre, code {
-    font-size: 1.1em;
+p code {
+    background: #eee;
+    color: black;
+    padding: 1px 3px;
 }
 
 a:link {
@@ -50,6 +54,7 @@ h1 {
     line-height: 1.4em;
     font-size: 2em;
     margin-bottom: .5em;
+    font-weight: normal;
 }
 
 h2 {
@@ -87,13 +92,19 @@ dd {
     margin: 0 0 1em 2em;
 }
 
+#header {
+  padding: 1em;
+  margin-left: 10em;
+}
+
 #main {
-    width: 43em;
-    margin-left: 14em;
+  margin-left: 10em;
 }
 
 #content {
     padding: 2em 2em 2em 1em;
+    width: 40em;
+    float: left;
 }
 
 #blurb {
@@ -104,54 +115,15 @@ dd {
 #sidebar {
     color: #777;
     padding: 2em;
-    width: 10em;
     height: 100%;
     overflow: auto;
-    position: fixed;
-    left: 0;
-    top: 0;
-    bottom: 0;
-}
-.search {
-    width: 15em;
-    position: fixed;
-    top: 2em;
-    right: 2em;
-    opacity: .5;
-}
-div.search:hover {
-    opacity: 1;
-}
-.search #search {
-    width: 15em;
-    padding: .4em .5em .3em;
-    border: .25em solid #eee;
-}
-.search .search_results {
-    margin: 0;
-    border: .25em solid #eee;
-    border-top: 0;
-    display: none;
-    background: #fff;
-}
-.search .search_results li {
-    list-style: none;
-    padding: .25em .5em;
-}
-.search .search_results .parent {
-    font-size: .9em;
-    font-style: italic;
-    color: #555;
-}
-.search .search_results .parent a {
-    color: #222;
-}
-.search .search_results .tag {
-    font-style: italic;
-    color: #555;
+    float: left;
 }
 #sidebar h4 {
     font-style: italic;
+    font-weight: normal;
+    margin: 0;
+    padding: 0;
 }
 #sidebar {
     margin-left: 1em;
@@ -163,9 +135,37 @@ div.search:hover {
     cursor: pointer;
     color: #777;
 }
+
 #sidebar ol {
-    margin: 0 0 0 1em;
+  padding: 0 0 0 10px;
 }
+#sidebar ol li {
+  list-style-type: none;
+  font-size: 14px;
+  line-height: 30px;
+}
+#sidebar ol a {
+  background: #5d4c4c;
+  padding: 5px 6px;
+  color: white;
+  text-decoration: none;
+  font-family: monospace;
+  font-weight: bold;
+}
+#sidebar ol li a:visited {
+  background: #8cb287;
+}
+#sidebar ol .active a {
+  background: #ebb263 !important;
+  -webkit-animation: wiggle-build 0.5s infinite;
+}
+
+@-webkit-keyframes wiggle-build {
+  0% { -webkit-transform: rotate(1deg); }
+  50% { -webkit-transform: rotate(-1deg); }
+  100% { -webkit-transform: rotate(1deg); }
+}
+
 
 pre a:link,
 pre a:visited,

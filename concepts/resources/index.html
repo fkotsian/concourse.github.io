@@ -1,188 +1,54 @@
-<!DOCTYPE html>
+
+<!doctype html>
 <html>
-    <head>
-        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-        <title>Resources</title>
-        <link type="text/css" rel="stylesheet" href="/css/main.css" />
-    </head>
-    <body>
+  <head>
+    <meta charset="utf-8">
 
+    <!-- Always force latest IE rendering engine or request Chrome Frame -->
+    <meta content="IE=edge,chrome=1" http-equiv="X-UA-Compatible">
 
-<div id="main">
-    <div id="content">
-        
+    <title>Resources</title>
 
-<h1 id="toc_0">Resources</h1>
+    <link href="/stylesheets/normalize.css" rel="stylesheet" type="text/css" /><link href="/stylesheets/all.css" rel="stylesheet" type="text/css" />
+    <script src="/javascripts/all.js" type="text/javascript"></script>
+  </head>
+  <body class="concepts concepts_resources concepts_resources_index">
+    <div id="main">
+	<div id="content">
+    
+  <h1 id="resources">Resources</h1>
 
 <p>At the center of everything is a resource. A resource is any entity that can be
-versioned. This means it can be checked for new versions from some cursor,
-pulled down at some specific version, and/or pushed up to some destination.</p>
+versioned. This means it can be checked for new versions, pulled down at some
+specific version, and/or pushed up to some destination.</p>
 
-<p>A resource type is technically defined as three simple scripts, corresponding
-to these three actions: <code>check</code>, for checking for new versions, <code>in</code> for
-fetching a resource and placing it into a container, and <code>out</code> for performing
-an output.</p>
+<p>Every resource has a <code>type</code> (for example, <code>git</code>, or <code>s3</code>, or <code>time</code>). Every
+resource is also configured with a <code>source</code>, which describes where the resource
+lives (for example, <code>uri: git@github.com:foo/bar.git</code>).</p>
 
-<p>For example, the <code>git</code> resource can be summed up as:</p>
+<p>At its core, Concourse knows nothing about <code>git</code> or any of these. Instead, it
+uses an abstract interface, leaving it to userland to implement all of them.</p>
 
-<dl>
-  <dt>check</dt>
-    <dd><code>git pull && git log [cursor]..HEAD</code></dd>
-  
-  <dt>in</dt>
-    <dd><code>git clone && git checkout [version]</code></dd>
-  
-  <dt>out</dt>
-    <dd><code>git push origin somebranch</code></dd>
-</dl>
+<p>This abstraction is immensely powerful, as it does not limit Concourse to
+whatever things its authors thought to integrate with. Instead, anyone using
+Concourse is free to implement their own resource types, representing whatever
+entities they want to integrate with.</p>
 
-<p>At its core, Concourse knows nothing about Git. Instead, all Concourse knows is
-the interface of a resource <em>type</em>. This is immensely powerful, as it does not
-limit Concourse to whatever things its authors thought to allow users to
-integrate with. Instead. everything is provided in user-land, and anyone using
-Concourse is free to implement their own.</p>
+<p>Technically, a resource type is implemented by a container image with three
+scripts: <code>check</code> for checking for new versions, <code>in</code> for pulling it down, and
+<code>out</code> for pushing it up.</p>
 
-<p>With this set of primitives you can model any pipeline, from simple
-(unit/integration &rarr; deploy &rarr; ship) to complex (testing on multiple
-infrastructures, etc.). There are no more nooks and crannies of Concourse
-introduced as your pipeline becomes more complicated; the provided primitives
-should be enough.</p>
+<p>Distributing resource types as containers allows them to package their own
+dependencies. For example, the Git resource comes with <code>git</code> installed.</p>
 
-<h2 id="toc_1">Anatomy of a Resource Type</h2>
 
-<p>Resource types are implemented by containers that have three simple scripts:</p>
+	</div>
 
-<h3 id="toc_2"><code>/opt/resource/check</code>: Check for new versions.</h3>
+	<div id="sidebar">
+		    <ol><li class='parent'><span class='parent-label'><a href="/concepts/">Concepts</a></span><ol><li class='parent'><span class='parent-label'><a href="/concepts/builds/">Builds</a></span><ol><li class='child'><a href="/concepts/builds/01-configuring.html">Configuration</a></li><li class='child'><a href="/concepts/builds/02-runtime-environment.html">Runtime Environment</a></li></ol></li><li class='parent'><span class='parent-label'><a href="/concepts/jobs/">Jobs</a></span><ol><li class='child'><a href="/concepts/jobs/01-configuring.html">Configuration</a></li><li class='child'><a href="/concepts/jobs/02-inputs.html">Inputs</a></li><li class='child'><a href="/concepts/jobs/03-outputs.html">Outputs</a></li></ol></li><li class='parent'><span class='parent-label active'><a href="/concepts/resources/">Resources</a></span><ol><li class='child'><a href="/concepts/resources/01-configuring.html">Configuration</a></li><li class='child'><a href="/concepts/resources/02-interface.html">Implementing a Resource</a></li></ol></li></ol></li><li class='parent'><span class='parent-label'><a href="/deploying/">Deploying</a></span><ol><li class='child'><a href="/deploying/01-vagrant.html">With Vagrant</a></li><li class='child'><a href="/deploying/02-bosh.html">With BOSH</a></li></ol></li><li class='parent'><span class='parent-label'><a href="/what-and-why/">What & Why</a></span><ol><li class='child'><a href="/what-and-why/01-easy-to-learn.html">Easy to learn</a></li><li class='child'><a href="/what-and-why/02-local-iteration.html">Local iteration</a></li><li class='child'><a href="/what-and-why/03-build-isolation.html">Build isolation</a></li><li class='child'><a href="/what-and-why/04-reproducible.html">Reproducible</a></li><li class='child'><a href="/what-and-why/05-unintrusive.html">Unintrusive</a></li><li class='child'><a href="/what-and-why/06-bootstrapped.html">Bootstrapped</a></li></ol></li></ol>
 
-<p>A resource type&rsquo;s <code>/check</code> script is invoked to detect new versions of the
-resource. It is given the configured source and current version on stdin, and
-must print the array of new versions, in chronological order, to stdout.</p>
-
-<p>Note that the current version will be missing if this is the first time the
-resource has been used. In this case, the script should emit only the most
-recent version, <em>not</em> every version since the resource&rsquo;s inception.</p>
-
-<p>For example, here&rsquo;s what the input for a <code>git</code> resource may look like:</p>
-
-<div class="highlight"><pre><span class="p">{</span>
-  <span class="nt">&quot;source&quot;</span><span class="p">:</span> <span class="p">{</span>
-    <span class="nt">&quot;uri&quot;</span><span class="p">:</span> <span class="s2">&quot;...&quot;</span><span class="p">,</span>
-    <span class="nt">&quot;branch&quot;</span><span class="p">:</span> <span class="s2">&quot;develop&quot;</span><span class="p">,</span>
-    <span class="nt">&quot;private_key&quot;</span><span class="p">:</span> <span class="s2">&quot;...&quot;</span>
-  <span class="p">},</span>
-  <span class="nt">&quot;version&quot;</span><span class="p">:</span> <span class="p">{</span> <span class="nt">&quot;ref&quot;</span><span class="p">:</span> <span class="s2">&quot;61cebfdb274da579de4287347967b580d02d31e3&quot;</span> <span class="p">}</span>
-<span class="p">}</span>
-</pre></div>
-
-<p>And the output, assuming <code>d74e01...</code> is the commit immediately after <code>61cbef</code>:</p>
-
-<div class="highlight"><pre><span class="p">[</span>
-  <span class="p">{</span> <span class="nt">&quot;ref&quot;</span><span class="p">:</span> <span class="s2">&quot;d74e0124818939e857f503734fdb0e7ea5f3b20c&quot;</span> <span class="p">},</span>
-  <span class="p">{</span> <span class="nt">&quot;ref&quot;</span><span class="p">:</span> <span class="s2">&quot;7154febfa9b398361dcbd56566a161c35e7c5186&quot;</span> <span class="p">}</span>
-<span class="p">]</span>
-</pre></div>
-
-<p>The list may be empty, if the given version is already the latest.</p>
-
-<h3 id="toc_3"><code>/opt/resource/in</code>: Fetch a given resource.</h3>
-
-<p>The <code>/in</code> script is passed a destination directory as <code>$1</code>, and is given on
-stdin the configured source and, optionally, a precise version of the resource
-to fetch.</p>
-
-<p>The script must fetch the resource and place it in the given directory.</p>
-
-<p>Because the input may not specify a version, the <code>/in</code> script must print out
-the version that it fetched. This allows the upstream to not have to perform
-<code>/check</code> before <code>/in</code>, which can be slow (for git it implies two clones).</p>
-
-<p>Additionally, the script may emit metadata as a list of key-value pairs. This
-data is intended for public consumption and will make it upstream, intended to
-be shown on the build&rsquo;s page.</p>
-
-<p>Example input, in this case for the <code>git</code> resource:</p>
-
-<div class="highlight"><pre><span class="p">{</span>
-  <span class="nt">&quot;source&quot;</span><span class="p">:</span> <span class="p">{</span>
-    <span class="nt">&quot;uri&quot;</span><span class="p">:</span> <span class="s2">&quot;...&quot;</span><span class="p">,</span>
-    <span class="nt">&quot;branch&quot;</span><span class="p">:</span> <span class="s2">&quot;develop&quot;</span><span class="p">,</span>
-    <span class="nt">&quot;private_key&quot;</span><span class="p">:</span> <span class="s2">&quot;...&quot;</span>
-  <span class="p">},</span>
-  <span class="nt">&quot;version&quot;</span><span class="p">:</span> <span class="p">{</span> <span class="nt">&quot;ref&quot;</span><span class="p">:</span> <span class="s2">&quot;61cebfdb274da579de4287347967b580d02d31e3&quot;</span> <span class="p">}</span>
-<span class="p">}</span>
-</pre></div>
-
-<p>Note that the <code>version</code> may be <code>null</code>.</p>
-
-<p>Example output:</p>
-
-<div class="highlight"><pre><span class="p">{</span>
-  <span class="nt">&quot;version&quot;</span><span class="p">:</span> <span class="p">{</span> <span class="nt">&quot;ref&quot;</span><span class="p">:</span> <span class="s2">&quot;61cebfdb274da579de4287347967b580d02d31e3&quot;</span> <span class="p">},</span>
-  <span class="nt">&quot;metadata&quot;</span><span class="p">:</span> <span class="p">[</span>
-    <span class="p">{</span> <span class="nt">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;commit&quot;</span><span class="p">,</span> <span class="nt">&quot;value&quot;</span><span class="p">:</span> <span class="s2">&quot;61cebfdb274da579de4287347967b580d02d31e3&quot;</span> <span class="p">},</span>
-    <span class="p">{</span> <span class="nt">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;author&quot;</span><span class="p">,</span> <span class="nt">&quot;value&quot;</span><span class="p">:</span> <span class="s2">&quot;Hulk Hogan&quot;</span> <span class="p">}</span>
-  <span class="p">]</span>
-<span class="p">}</span>
-</pre></div>
-
-<h3 id="toc_4"><code>/opt/resource/out</code>: Update a resource.</h3>
-
-<p>The <code>/out</code> script is called with a path to the directory containing the build&rsquo;s
-full set of sources as the first argument, and is given on stdin the configured
-params and the resource&rsquo;s source information. The source directory is as it was
-at the end of the build.</p>
-
-<p>The script must emit the resulting version of the resource. For example, the
-<code>git</code> resource emits the sha of the commit that it just pushed.</p>
-
-<p>Additionally, the script may emit metadata as a list of key-value pairs. This
-data is intended for public consumption and will make it upstream, intended to
-be shown on the build&rsquo;s page.</p>
-
-<p>Example input, in this case for the <code>git</code> resource:</p>
-
-<div class="highlight"><pre><span class="p">{</span>
-  <span class="nt">&quot;params&quot;</span><span class="p">:</span> <span class="p">{</span>
-    <span class="nt">&quot;branch&quot;</span><span class="p">:</span> <span class="s2">&quot;develop&quot;</span><span class="p">,</span>
-  <span class="p">},</span>
-  <span class="nt">&quot;source&quot;</span><span class="p">:</span> <span class="p">{</span>
-    <span class="nt">&quot;uri&quot;</span><span class="p">:</span> <span class="s2">&quot;git@...&quot;</span><span class="p">,</span>
-    <span class="nt">&quot;private_key&quot;</span><span class="p">:</span> <span class="s2">&quot;...&quot;</span><span class="p">,</span>
-  <span class="p">}</span>
-<span class="p">}</span>
-</pre></div>
-
-<p>Example output:</p>
-
-<div class="highlight"><pre><span class="p">{</span>
-  <span class="nt">&quot;version&quot;</span><span class="p">:</span> <span class="p">{</span> <span class="nt">&quot;ref&quot;</span><span class="p">:</span> <span class="s2">&quot;61cebfdb274da579de4287347967b580d02d31e3&quot;</span> <span class="p">},</span>
-  <span class="nt">&quot;metadata&quot;</span><span class="p">:</span> <span class="p">[</span>
-    <span class="p">{</span> <span class="nt">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;commit&quot;</span><span class="p">,</span> <span class="nt">&quot;value&quot;</span><span class="p">:</span> <span class="s2">&quot;61cebfdb274da579de4287347967b580d02d31e3&quot;</span> <span class="p">},</span>
-    <span class="p">{</span> <span class="nt">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;author&quot;</span><span class="p">,</span> <span class="nt">&quot;value&quot;</span><span class="p">:</span> <span class="s2">&quot;Mick Foley&quot;</span> <span class="p">}</span>
-  <span class="p">]</span>
-<span class="p">}</span>
-</pre></div>
-
-    </div>
+	</div>
 </div>
 
-<div id="sidebar">
-    <h4>On this page:</h4>
-    <nav id="TableOfContents">
-<ul>
-<li><a href="#toc_0">Resources</a>
-<ul>
-<li><a href="#toc_1">Anatomy of a Resource Type</a>
-<ul>
-<li><a href="#toc_2"><code>/opt/resource/check</code>: Check for new versions.</a></li>
-<li><a href="#toc_3"><code>/opt/resource/in</code>: Fetch a given resource.</a></li>
-<li><a href="#toc_4"><code>/opt/resource/out</code>: Update a resource.</a></li>
-</ul></li>
-</ul></li>
-</ul>
-</nav>
-</div>
-
-    </body>
+  </body>
 </html>
-

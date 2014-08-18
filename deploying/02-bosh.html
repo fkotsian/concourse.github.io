@@ -1,0 +1,193 @@
+
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+
+    <!-- Always force latest IE rendering engine or request Chrome Frame -->
+    <meta content="IE=edge,chrome=1" http-equiv="X-UA-Compatible">
+
+    <title>Concourse</title>
+
+    <link href="/stylesheets/normalize.css" rel="stylesheet" type="text/css" /><link href="/stylesheets/all.css" rel="stylesheet" type="text/css" />
+    <script src="/javascripts/all.js" type="text/javascript"></script>
+  </head>
+  <body class="deploying deploying_02-bosh">
+    <div id="main">
+	<div id="content">
+    
+  <h1 id="with-bosh">With BOSH</h1>
+
+<p>Once you start needing more workers and <em>really</em> caring about your CI
+deployment, though, it's best to manage it with BOSH proper.</p>
+
+<p>Using BOSH gives you a self-healing, predictable environment, that can be scaled
+up or down by changing a single number.</p>
+
+<p>The <a href="http://docs.cloudfoundry.org/bosh/">BOSH documentation</a> outlines the
+concepts, and how to bootstrap on various infrastructures.</p>
+
+<h2 id="setting-up-the-infrastructure">Setting up the infrastructure</h2>
+
+<p>Step one is to pick your infrastructure. AWS, vSphere, and OpenStack are fully
+supported by BOSH. <a href="https://github.com/cloudfoundry/bosh-lite">BOSH-Lite</a> is a
+pseudo-infrastructure that deploys everything within a single VM. It is a great
+way to get started with Concourse and BOSH at the same time, with a faster
+feedback loop.</p>
+
+<p>Concourse's infrastructure requirements are fairly straightforward. For example,
+Concourse's own pipeline is deployed within an AWS VPC, with its web instances
+automatically registered with an Elastic Load Balancer by BOSH.</p>
+
+<p><a href="http://consul.io">Consul</a> is baked into the BOSH release, so that you only
+need to configure static IPs for the jobs running Consul in server mode, and
+then configure the Consul agents on the other jobs to join with the server. This
+way you can have 100 workers without having to configure them 100 times.</p>
+
+<h3 id="bosh-lite">BOSH-Lite</h3>
+
+<p>Learning BOSH and your infrastructure at the same time will probably be hard. If
+you're getting started with BOSH, you may want to check out
+<a href="https://github.com/cloudfoundry/bosh-lite">BOSH-Lite</a>, which gives you a fairly
+BOSHy experience, in a single VM on your machine. This is a good way to learn
+the BOSH tooling without having to pay hourly for AWS instances.</p>
+
+<p>To spin up a BOSH-Lite director, just clone the repo and run:</p>
+
+<pre><code class="highlight shell"><span class="gp">$ </span><span class="nb">cd </span>bosh-lite/
+<span class="gp">$ </span>vagrant up
+<span class="gp">$ </span>bosh target 192.168.50.4
+</code></pre>
+
+<p>Once you've targeted it, everything should work exactly the same way it works on
+any other infrastructure.</p>
+
+<h3 id="aws">AWS</h3>
+
+<p>For AWS, it is recommended to deploy Concourse within a VPC, with the <code>web</code> jobs
+sitting behind an ELB. Registering instances with the ELB is automated by BOSH;
+you'll just have to create the ELB itself. This configuration is more secure, as
+your CI system's internal jobs aren't exposed to the outside world; only the
+webserver.</p>
+
+<p>Note that currently the <code>web</code> job is a singleton. Scaling up will cause them
+both to schedule builds, which you probably don't want. So for now, using an ELB
+is a bit overkill as it will only ever go to one instance, but it at least acts
+as a gateway into the VPC.</p>
+
+<h3 id="vsphere-openstack">vSphere, OpenStack</h3>
+
+<p>Deploying to vSphere and OpenStack should look roughly the same as the rest, but
+this configuration has so far not seen any mileage. You may want to consult the
+<a href="http://docs.cloudfoundry.org/bosh/">BOSH documentation</a> instead.</p>
+
+<h2 id="deploying-and-upgrading-concourse">Deploying and upgrading Concourse</h2>
+
+<p>Once you've set up BOSH on your infrastructure, the following steps should get
+you started:</p>
+
+<h3 id="upload-the-stemcell">Upload the stemcell</h3>
+
+<p>A stemcell is the base image for your VMs. It controls the kernel and OS
+distribution, and the version of the BOSH agent.</p>
+
+<p>Concourse is tested on the Trusty stemcell. You can find the latest stemcell by
+executing <code>bosh public stemcells --full</code>. Pick the one that matches your
+infrastructure, and upload it to your BOSH director with <code>bosh upload stemcell
+&lt;full url&gt;</code>.</p>
+
+<h3 id="upload-the-concourse-release">Upload the Concourse release</h3>
+
+<p>Now that you've got a stemcell, the only other thing to upload is Concourse
+itself. This can be done from the Concourse repo with <code>bosh upload release
+releases/concourse/concourse-X.X.X.yml</code>. Replace <code>X.X.X</code> with the highest
+non-release-candidate version number.</p>
+
+<h3 id="configure--deploy">Configure &amp; Deploy</h3>
+
+<p>All you need to deploy your entire Concourse cluster is a BOSH deployment
+manifest. This single document describes the desired layout of an entire
+cluster.</p>
+
+<p>The Concourse repo contains a few example manifests:</p>
+
+<ul>
+  <li><a href="https://github.com/concourse/concourse/blob/develop/manifests/bosh-lite.yml">BOSH Lite</a>.</li>
+  <li><a href="https://github.com/concourse/concourse/blob/develop/manifests/aws-vpc.yml">AWS VPC</a>.</li>
+</ul>
+
+<p>If you reuse these manifests, you'll probably want to change the following
+values:</p>
+
+<ul>
+  <li>
+    <p><code>director_uuid</code>: The UUID of your deployment's BOSH director. Obtain this with
+<code>bosh status --uuid</code>. This is a safeguard against deploying to the wrong
+environments (the risk of making deploys so automated.)</p>
+  </li>
+  <li>
+    <p><code>networks</code>: Your infrastructure's IP ranges and such will probably be
+different, but may end up being the same if you're using AWS with a VPC that's
+the same CIDR block.</p>
+  </li>
+  <li>
+    <p><code>jobs.web.networks.X.static_ips</code> and
+<code>jobs.X.properties.consul.agent.servers.lan</code>: Pick an internal private IP to
+assign here; this controls how Concourse auto-discovers its internal
+services/workers.</p>
+  </li>
+  <li>
+    <p><code>jobs.web.properties.atc.config</code>: The configuration for your entire CI
+pipeline. Most manifests pull this up top for convenience, and YAML-alias this
+property.</p>
+  </li>
+  <li>
+    <p><code>jobs.db.properties.postgresql.roles</code> and
+<code>jobs.web.properties.atc.postgresql.role</code>: The credentials to the PostgreSQL
+instance.</p>
+  </li>
+  <li>
+    <p><code>jobs.db.persistent_disk</code>: How much space to give PostgreSQL. You can change
+this at any time; BOSH will safely migrate your persistent data to a new disk
+when scaling up.</p>
+  </li>
+  <li>
+    <p><code>jobs.worker.instances</code>: Change this number to scale up or down the number of
+worker VMs. Concourse will randomly pick a VM out of this pool every time it
+starts a build.</p>
+  </li>
+  <li>
+    <p><code>resource_pools</code>: This is where you configure things like your EC2 instance
+type, the ELB to register your instances in, etc.</p>
+  </li>
+</ul>
+
+<p>You can change these values at any time and BOSH deploy again, and BOSH will do
+The Right Thing™. It will tear down VMs as necessary, but always make sure
+persistent data persists, and things come up as they should.</p>
+
+<p>Once you have a deployment manifest, deploying Concourse should simply be:</p>
+
+<pre><code class="highlight shell"><span class="gp">$ </span>bosh deployment path/to/manifest.yml
+<span class="gp">$ </span>bosh deploy
+</code></pre>
+
+<p>When new Concourse versions come out, upgrading should simply be:</p>
+
+<pre><code class="highlight shell"><span class="gp">$ </span>bosh upload release releases/concourse/concourse-X.X.X.yml
+<span class="gp">$ </span>bosh deploy
+</code></pre>
+
+<p>BOSH will then kick off a rolling deploy of your cluster.</p>
+
+
+	</div>
+
+	<div id="sidebar">
+		    <ol><li class='parent'><span class='parent-label'><a href="/concepts/">Concepts</a></span><ol><li class='parent'><span class='parent-label'><a href="/concepts/builds/">Builds</a></span><ol><li class='child'><a href="/concepts/builds/01-configuring.html">Configuration</a></li><li class='child'><a href="/concepts/builds/02-runtime-environment.html">Runtime Environment</a></li></ol></li><li class='parent'><span class='parent-label'><a href="/concepts/jobs/">Jobs</a></span><ol><li class='child'><a href="/concepts/jobs/01-configuring.html">Configuration</a></li><li class='child'><a href="/concepts/jobs/02-inputs.html">Inputs</a></li><li class='child'><a href="/concepts/jobs/03-outputs.html">Outputs</a></li></ol></li><li class='parent'><span class='parent-label'><a href="/concepts/resources/">Resources</a></span><ol><li class='child'><a href="/concepts/resources/01-configuring.html">Configuration</a></li><li class='child'><a href="/concepts/resources/02-interface.html">Implementing a Resource</a></li></ol></li></ol></li><li class='parent'><span class='parent-label'><a href="/deploying/">Deploying</a></span><ol><li class='child'><a href="/deploying/01-vagrant.html">With Vagrant</a></li><li class='child active'><a href="/deploying/02-bosh.html">With BOSH</a></li></ol></li><li class='parent'><span class='parent-label'><a href="/what-and-why/">What & Why</a></span><ol><li class='child'><a href="/what-and-why/01-easy-to-learn.html">Easy to learn</a></li><li class='child'><a href="/what-and-why/02-local-iteration.html">Local iteration</a></li><li class='child'><a href="/what-and-why/03-build-isolation.html">Build isolation</a></li><li class='child'><a href="/what-and-why/04-reproducible.html">Reproducible</a></li><li class='child'><a href="/what-and-why/05-unintrusive.html">Unintrusive</a></li><li class='child'><a href="/what-and-why/06-bootstrapped.html">Bootstrapped</a></li></ol></li></ol>
+
+	</div>
+</div>
+
+  </body>
+</html>
