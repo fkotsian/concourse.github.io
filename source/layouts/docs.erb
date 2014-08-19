@@ -1,0 +1,7 @@
+<% wrap_layout :inner do %>
+  <% content_for :sidebar do %>
+    <ol><%= navigation(data.tree) %></ol>
+  <% end %>
+
+  <%= yield %>
+<% end %>

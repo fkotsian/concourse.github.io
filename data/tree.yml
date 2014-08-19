@@ -1,0 +1,12 @@
+---
+01-what-and-why.html.markdown: /01-what-and-why.html.markdown
+concepts:
+  01-builds.html.markdown: /concepts/01-builds.html.markdown
+  02-jobs.html.markdown: /concepts/02-jobs.html.markdown
+  03-resources.html.markdown: /concepts/03-resources.html.markdown
+configuring:
+  01-builds.html.markdown: /configuring/01-builds.html.markdown
+  02-pipelines.html.markdown: /configuring/02-pipelines.html.markdown
+deploying:
+  01-vagrant.html.markdown: /deploying/01-vagrant.html.markdown
+  02-bosh.html.markdown: /deploying/02-bosh.html.markdown

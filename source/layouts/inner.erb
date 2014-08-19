@@ -1,0 +1,11 @@
+<% wrap_layout :layout do %>
+<div id="main">
+	<div id="content">
+    <%= yield %>
+	</div>
+
+	<div id="sidebar">
+		<%= yield_content :sidebar %>
+	</div>
+</div>
+<% end %>
