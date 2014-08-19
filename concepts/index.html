@@ -17,33 +17,25 @@
     
   <h1 id="concepts">Concepts</h1>
 
-<p>All of Concourse is built up from the following primitives:</p>
+<p>Like files and pipes in Unix, the goal is to build an expressive system with as
+few distinct moving parts as possible.</p>
 
-<h3 id="builds">Builds</h3>
+<p>Concourse limits itself to three core concepts: builds, jobs, and resources.
+Interesting features like timed triggers and locking resources are modeled in
+terms of these, rather than layers on top.</p>
 
-<p>A build is the execution of a script in a controlled, isolated environment with
-resources available to it. For example, running <code>myrepo/scripts/test</code> in a
-Docker container with some parameters.</p>
+<p>With these primitives you can model any pipeline, from simple (unit →
+integration → deploy → ship) to complex (testing on multiple
+infrastructures, fanning out and in, etc.).</p>
 
-<h3 id="jobs">Jobs</h3>
-
-<p>A job is a predefined configuration for builds that will be executed. It has
-inputs and outputs, and typically executes when any of its input resources
-change. Common jobs would be configured to run unit tests, or integration tests
-against multiple inputs.</p>
-
-<h3 id="resources">Resources</h3>
-
-<p>A resource is any entity that can be checked for new versions, pulled down at a
-specific version, and/or pushed up to generate new versions. A common example
-would be a git repository, but it can also represent more abstract things like
-<a href="https://github.com/concourse/time-resource">time</a>.</p>
+<p>There are no more nooks and crannies of Concourse introduced as your pipeline
+becomes more involved.</p>
 
 
 	</div>
 
 	<div id="sidebar">
-		    <ol><li class='parent'><span class='parent-label active'><a href="/concepts/">Concepts</a></span><ol><li class='child'><a href="/concepts/01-builds.html">Builds</a></li><li class='child'><a href="/concepts/02-jobs.html">Jobs</a></li><li class='child'><a href="/concepts/03-resources.html">Resources</a></li></ol></li><li class='parent'><span class='parent-label'><a href="/configuring/">Configuration</a></span><ol><li class='child'><a href="/configuring/01-builds.html">Builds</a></li><li class='child'><a href="/configuring/02-pipelines.html">Pipelines</a></li></ol></li><li class='parent'><span class='parent-label'><a href="/deploying/">Deploying</a></span><ol><li class='child'><a href="/deploying/01-vagrant.html">With Vagrant</a></li><li class='child'><a href="/deploying/02-bosh.html">With BOSH</a></li></ol></li><li class='parent'><span class='parent-label'><a href="/what-and-why/">What &amp; Why</a></span><ol><li class='child'><a href="/what-and-why/01-easy-to-learn.html">Easy to learn</a></li><li class='child'><a href="/what-and-why/02-local-iteration.html">Local iteration</a></li><li class='child'><a href="/what-and-why/03-build-isolation.html">Build isolation</a></li><li class='child'><a href="/what-and-why/04-reproducible.html">Reproducible</a></li><li class='child'><a href="/what-and-why/05-unintrusive.html">Unintrusive</a></li><li class='child'><a href="/what-and-why/06-bootstrapped.html">Bootstrapped</a></li></ol></li></ol>
+		    <ol><li class='child'><a href="/01-what-and-why.html">What &amp; Why</a></li><li class='parent'><span class='parent-label active'><a href="/concepts/">Concepts</a></span><ol><li class='child'><a href="/concepts/01-builds.html">Builds</a></li><li class='child'><a href="/concepts/02-jobs.html">Jobs</a></li><li class='child'><a href="/concepts/03-resources.html">Resources</a></li></ol></li><li class='parent'><span class='parent-label'><a href="/configuring/">Configuring</a></span><ol><li class='child'><a href="/configuring/01-builds.html">Builds</a></li><li class='child'><a href="/configuring/02-pipelines.html">Pipelines</a></li></ol></li><li class='parent'><span class='parent-label'><a href="/deploying/">Deploying</a></span><ol><li class='child'><a href="/deploying/01-vagrant.html">With Vagrant</a></li><li class='child'><a href="/deploying/02-bosh.html">With BOSH</a></li></ol></li></ol>
 
 	</div>
 </div>

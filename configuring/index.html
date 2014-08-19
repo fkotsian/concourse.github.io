@@ -15,14 +15,28 @@
     <div id="main">
 	<div id="content">
     
-  <h1 id="configuration">Configuration</h1>
+  <h1 id="configuring">Configuring</h1>
 
+<p>Concourse does not require a wizard to configure. It is designed to be
+statically configured via a single file, no larger than it has to be. When
+your Concourse deployment burns down, it doesn't matter. Deploy it again
+somewhere else, in the exact same configuration.</p>
+
+<p>An entire arbitrarily complicated pipeline can be declared in a single
+human-readable config file, and you'll <em>like it</em>.</p>
+
+<p>With <a href="https://github.com/cloudfoundry/bosh">BOSH</a>, deploying a Concourse
+cluster is easy regardless of the size of the cluster. Scaling up to handle
+higher workloads is as trivial as bumping worker instance count.</p>
+
+<p>There are two things to learn how to configure: your individual builds, and your
+pipeline, which composes them.</p>
 
 
 	</div>
 
 	<div id="sidebar">
-		    <ol><li class='parent'><span class='parent-label'><a href="/concepts/">Concepts</a></span><ol><li class='child'><a href="/concepts/01-builds.html">Builds</a></li><li class='child'><a href="/concepts/02-jobs.html">Jobs</a></li><li class='child'><a href="/concepts/03-resources.html">Resources</a></li></ol></li><li class='parent'><span class='parent-label active'><a href="/configuring/">Configuration</a></span><ol><li class='child'><a href="/configuring/01-builds.html">Builds</a></li><li class='child'><a href="/configuring/02-pipelines.html">Pipelines</a></li></ol></li><li class='parent'><span class='parent-label'><a href="/deploying/">Deploying</a></span><ol><li class='child'><a href="/deploying/01-vagrant.html">With Vagrant</a></li><li class='child'><a href="/deploying/02-bosh.html">With BOSH</a></li></ol></li><li class='parent'><span class='parent-label'><a href="/what-and-why/">What &amp; Why</a></span><ol><li class='child'><a href="/what-and-why/01-easy-to-learn.html">Easy to learn</a></li><li class='child'><a href="/what-and-why/02-local-iteration.html">Local iteration</a></li><li class='child'><a href="/what-and-why/03-build-isolation.html">Build isolation</a></li><li class='child'><a href="/what-and-why/04-reproducible.html">Reproducible</a></li><li class='child'><a href="/what-and-why/05-unintrusive.html">Unintrusive</a></li><li class='child'><a href="/what-and-why/06-bootstrapped.html">Bootstrapped</a></li></ol></li></ol>
+		    <ol><li class='child'><a href="/01-what-and-why.html">What &amp; Why</a></li><li class='parent'><span class='parent-label'><a href="/concepts/">Concepts</a></span><ol><li class='child'><a href="/concepts/01-builds.html">Builds</a></li><li class='child'><a href="/concepts/02-jobs.html">Jobs</a></li><li class='child'><a href="/concepts/03-resources.html">Resources</a></li></ol></li><li class='parent'><span class='parent-label active'><a href="/configuring/">Configuring</a></span><ol><li class='child'><a href="/configuring/01-builds.html">Builds</a></li><li class='child'><a href="/configuring/02-pipelines.html">Pipelines</a></li></ol></li><li class='parent'><span class='parent-label'><a href="/deploying/">Deploying</a></span><ol><li class='child'><a href="/deploying/01-vagrant.html">With Vagrant</a></li><li class='child'><a href="/deploying/02-bosh.html">With BOSH</a></li></ol></li></ol>
 
 	</div>
 </div>

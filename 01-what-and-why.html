@@ -1,0 +1,148 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+
+    <!-- Always force latest IE rendering engine or request Chrome Frame -->
+    <meta content="IE=edge,chrome=1" http-equiv="X-UA-Compatible">
+
+    <title>Concourse</title>
+
+    <link href="/stylesheets/normalize.css" rel="stylesheet" type="text/css" /><link href="/stylesheets/all.css" rel="stylesheet" type="text/css" /><link href="/stylesheets/syntax.css" rel="stylesheet" type="text/css" />
+    <script src="/javascripts/all.js" type="text/javascript"></script>
+  </head>
+  <body class="x01-what-and-why">
+    <div id="main">
+	<div id="content">
+    
+  <h1 id="what--why">What &amp; Why</h1>
+
+<p>There are countless CI options out there. Transitioning from one CI system to
+another can be a huge investment depending on the size of your project.</p>
+
+<hr />
+
+<h2 id="easy-to-learn">Easy to learn</h2>
+
+<p>Over the years, you've probably learned way too many little details about how
+your CI system operates.</p>
+
+<p>Concourse is a response to the complexity introduced by other systems. It is
+built from as few distinct concepts as possible. To learn them, see
+<a href="/concepts">Concepts</a>.</p>
+
+<hr />
+
+<h2 id="no-build-pollution">No build pollution</h2>
+
+<p>Every build executes in a container, isolated from the rest. Multiple teams can
+use the same Concourse deployment without worrying about stepping on each
+other's toes (barring resource contention).</p>
+
+<p>The base image for each job's builds is configurable, and supports Docker
+images. Control your build's runtime environment as part of your project that
+needs it, not your worker VMs.</p>
+
+<hr />
+
+<h2 id="scalable-reproducible-deployment">Scalable, reproducible deployment</h2>
+
+<p>Concourse is statically configurable (by humans) and can be (re)created from
+scratch from a single BOSH deploy. Adding more workers is as easy as bumping a
+number in your BOSH deployment manifest.</p>
+
+<p>See <a href="/configuring">Configuring</a> and <a href="/deploying">Deploying</a>.</p>
+
+<hr />
+
+<h2 id="usable">Usable</h2>
+
+<p>Concourse is optimized for quickly navigating to the pages you most care about.
+From the main page, the shortest path from a pipeline view to the console
+output of a job's latest failing build is a single click.</p>
+
+<p>From there, the job's entire build history is displayed, and every input for
+the job is listed out, with any new inputs highlighted.</p>
+
+<p>The build log is colorized and supports unicode. It emulates your terminal and
+gets out of your way.</p>
+
+<hr />
+
+<h2 id="flexible">Flexible</h2>
+
+<p>Concourse provides the abstractions for you to be able to integrate with
+anything you need, and implements most interesting features in terms of this
+same primitive. See <a href="/concepts/03-resources.html">Resources</a>.</p>
+
+<hr />
+
+<h2 id="local-iteration">Local iteration</h2>
+
+<p>Everyone knows this dance: set up CI, push, build fails. Fix config, push,
+build fails… 20 commits later, success.</p>
+
+<p>Concourse's support for running builds locally eliminates this pesky workflow,
+and allows you to trust that your build running locally runs <em>exactly</em> the same
+way that it runs in your CI system.</p>
+
+<p>The workflow then becomes: set up CI, configure build locally, <code>fly</code>, build
+fails (we can't fix that), fix things up, <code>fly</code>…</p>
+
+<p>At the end of this, instead of 20 junk commits pushed to your repo, you've
+figured out a configuration for both running locally and running in CI.</p>
+
+<hr />
+
+<h2 id="bootstrapped">Bootstrapped</h2>
+
+<p>Proving all of this works is hard without having a real use case. Thankfully,
+Concourse itself is a sufficiently large piece of work that its own pipeline
+has been plenty to cut its teeth on.</p>
+
+<p>At the start of the pipeline are jobs configured for each individual component.
+These jobs simply run their unit tests, and are the first line of defense.</p>
+
+<p>The versions of each component that make it through this stage are then fed
+into an integration job that literally spins every component up in a room and
+makes them talk to each other.</p>
+
+<p>From there, the Docker images used for the resource types within the
+integration build are shipped, and the ref of each successful resource is
+bumped in the BOSH release repository.</p>
+
+<p>Because the release repo changed, a Deploy job kicks in, which literally
+<em>deploys to the same instance running the Deploy job</em>. Concourse's own
+pipeline drives out the need for deploys to not trash every running build.</p>
+
+<p>After a deploy succeeds, the Concourse version number resource is bumped, and
+new artifacts are available for shipping into a new release.</p>
+
+<p>At any point in time, I can walk in and trigger the <code>shipit</code> job, which takes
+the most recently built release candidate, bumps its version resource to a
+final number (<code>0.3.0.rc.3</code> to <code>0.3.0</code>), and uploads a <code>.tgz</code> to the S3 bucket
+containing final releases.</p>
+
+<p>Though the above chain of events may sound complicated, in reality it is just a
+bunch of simple functions of inputs → outputs.</p>
+
+<p>The way I've described this pipeline flow is precisely how each job is
+configured, and automatically visualized on the main page:</p>
+
+<p><a href="/images/concourse-pipeline.png"><img class="pipeline" src="/images/concourse-pipeline.png" alt="Concourse Pipeline" /></a></p>
+
+<p>Initially this array of squares may be a lot to take in, but on your own
+projects, where <em>reality</em> is this complicated, you'll appreciate the
+straightforward expression of every relationship.</p>
+
+
+	</div>
+
+	<div id="sidebar">
+		    <ol><li class='child active'><a href="/01-what-and-why.html">What &amp; Why</a></li><li class='parent'><span class='parent-label'><a href="/concepts/">Concepts</a></span><ol><li class='child'><a href="/concepts/01-builds.html">Builds</a></li><li class='child'><a href="/concepts/02-jobs.html">Jobs</a></li><li class='child'><a href="/concepts/03-resources.html">Resources</a></li></ol></li><li class='parent'><span class='parent-label'><a href="/configuring/">Configuring</a></span><ol><li class='child'><a href="/configuring/01-builds.html">Builds</a></li><li class='child'><a href="/configuring/02-pipelines.html">Pipelines</a></li></ol></li><li class='parent'><span class='parent-label'><a href="/deploying/">Deploying</a></span><ol><li class='child'><a href="/deploying/01-vagrant.html">With Vagrant</a></li><li class='child'><a href="/deploying/02-bosh.html">With BOSH</a></li></ol></li></ol>
+
+	</div>
+</div>
+
+  </body>
+</html>
