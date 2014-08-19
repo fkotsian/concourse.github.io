@@ -1,0 +1,204 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+
+    <!-- Always force latest IE rendering engine or request Chrome Frame -->
+    <meta content="IE=edge,chrome=1" http-equiv="X-UA-Compatible">
+
+    <title>Concourse</title>
+
+    <link href="/stylesheets/normalize.css" rel="stylesheet" type="text/css" /><link href="/stylesheets/all.css" rel="stylesheet" type="text/css" /><link href="/stylesheets/syntax.css" rel="stylesheet" type="text/css" />
+    <script src="/javascripts/all.js" type="text/javascript"></script>
+  </head>
+  <body class="concepts concepts_03-resources">
+    <div id="main">
+	<div id="content">
+    
+  <h1 id="resources">Resources</h1>
+
+<p>At the center of everything is a resource. A resource is any entity that can be
+versioned. This means it can be checked for new versions, pulled down at some
+specific version, and/or pushed up to some destination.</p>
+
+<p>Every resource has a <code>type</code> (for example, <code>git</code>, or <code>s3</code>, or <code>time</code>). Every
+resource is also configured with a <code>source</code>, which describes where the resource
+lives (for example, <code>uri: git@github.com:foo/bar.git</code>).</p>
+
+<p>At its core, Concourse knows nothing about <code>git</code> or any of these. Instead, it
+uses an abstract interface, leaving it to userland to implement all of them.</p>
+
+<p>This abstraction is immensely powerful, as it does not limit Concourse to
+whatever things its authors thought to integrate with. Instead, anyone using
+Concourse is free to implement their own resource types, representing whatever
+entities they want to integrate with.</p>
+
+<p>Technically, a resource type is implemented by a container image with three
+scripts: <code>check</code> for checking for new versions, <code>in</code> for pulling it down, and
+<code>out</code> for pushing it up.</p>
+
+<p>Distributing resource types as containers allows them to package their own
+dependencies. For example, the Git resource comes with <code>git</code> installed.</p>
+
+<h2 id="implementing-a-resource">Implementing a Resource</h2>
+
+<p>A resource type's container image provides the scripts <code>in</code>, <code>out</code>, and <code>check</code>,
+all placed in <code>/opt/resource</code>.</p>
+
+<p>If a resource will only ever be used for generating output (for example, code
+coverage), it's reasonable to only implement <code>out</code>. This will work just fine so
+long as no one tries to use it as an input.</p>
+
+<p>For use as an input, a resource should always implement <code>in</code> and <code>check</code>
+together.</p>
+
+<hr />
+
+<h3 id="check-check-for-new-versions"><code>check</code>: Check for new versions.</h3>
+
+<p>A resource type's <code>check</code> script is invoked to detect new versions of the
+resource. It is given the configured source and current version on stdin, and
+must print the array of new versions, in chronological order, to stdout.</p>
+
+<p>Note that the current version will be missing if this is the first time the
+resource has been used. In this case, the script should emit only the most
+recent version, <em>not</em> every version since the resource's inception.</p>
+
+<p>For example, here's what the input for a <code>git</code> resource may look like:</p>
+
+<pre><code class="highlight json"><span class="p">{</span><span class="w">
+  </span><span class="s2">"source"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="s2">"uri"</span><span class="p">:</span><span class="w"> </span><span class="s2">"git://some-uri"</span><span class="p">,</span><span class="w">
+    </span><span class="s2">"branch"</span><span class="p">:</span><span class="w"> </span><span class="s2">"develop"</span><span class="p">,</span><span class="w">
+    </span><span class="s2">"private_key"</span><span class="p">:</span><span class="w"> </span><span class="s2">"..."</span><span class="w">
+  </span><span class="p">},</span><span class="w">
+  </span><span class="s2">"version"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="s2">"ref"</span><span class="p">:</span><span class="w"> </span><span class="s2">"61cebf"</span><span class="w"> </span><span class="p">}</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre>
+
+<p>Upon receiving this payload the <code>git</code> resource would probably do something like:</p>
+
+<pre><code class="highlight shell"><span class="o">[</span> -d /tmp/repo <span class="o">]</span> <span class="o">||</span> git clone git://some-uri /tmp/repo
+<span class="nb">cd</span> /tmp/repo
+git pull <span class="o">&amp;&amp;</span> git log 61cbef..HEAD
+</code></pre>
+
+<p>Note that it conditionally clones; the container for checking versions is reused
+between checks, so that it can efficiently pull rather than cloning every time.</p>
+
+<p>And the output, assuming <code>d74e01</code> is the commit immediately after <code>61cbef</code>:</p>
+
+<pre><code class="highlight json"><span class="p">[</span><span class="w">
+  </span><span class="p">{</span><span class="w"> </span><span class="s2">"ref"</span><span class="p">:</span><span class="w"> </span><span class="s2">"d74e01"</span><span class="w"> </span><span class="p">},</span><span class="w">
+  </span><span class="p">{</span><span class="w"> </span><span class="s2">"ref"</span><span class="p">:</span><span class="w"> </span><span class="s2">"7154fe"</span><span class="w"> </span><span class="p">}</span><span class="w">
+</span><span class="p">]</span><span class="w">
+</span></code></pre>
+
+<p>The list may be empty, if the given version is already the latest.</p>
+
+<h3 id="in-fetch-a-given-resource"><code>in</code>: Fetch a given resource.</h3>
+
+<p>The <code>in</code> script is passed a destination directory as <code>$1</code>, and is given on
+stdin the configured source and, optionally, a precise version of the resource
+to fetch.</p>
+
+<p>The script must fetch the resource and place it in the given directory.</p>
+
+<p>Because the input may not specify a version, the <code>in</code> script must print out
+the version that it fetched. This allows the upstream to not have to perform
+<code>check</code> before <code>in</code>, which can be slow (for git it implies two clones).</p>
+
+<p>Additionally, the script may emit metadata as a list of key-value pairs. This
+data is intended for public consumption and will make it upstream, intended to
+be shown on the build's page.</p>
+
+<p>Example input, in this case for the <code>git</code> resource:</p>
+
+<pre><code class="highlight json"><span class="p">{</span><span class="w">
+  </span><span class="s2">"source"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="s2">"uri"</span><span class="p">:</span><span class="w"> </span><span class="s2">"git://some-uri"</span><span class="p">,</span><span class="w">
+    </span><span class="s2">"branch"</span><span class="p">:</span><span class="w"> </span><span class="s2">"develop"</span><span class="p">,</span><span class="w">
+    </span><span class="s2">"private_key"</span><span class="p">:</span><span class="w"> </span><span class="s2">"..."</span><span class="w">
+  </span><span class="p">},</span><span class="w">
+  </span><span class="s2">"version"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="s2">"ref"</span><span class="p">:</span><span class="w"> </span><span class="s2">"61cebf"</span><span class="w"> </span><span class="p">}</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre>
+
+<p>Note that the <code>version</code> may be <code>null</code>.</p>
+
+<p>Upon receiving this payload the <code>git</code> resource would probably do something like:</p>
+
+<pre><code class="highlight shell">git clone --branch develop git://some-uri <span class="nv">$1</span>
+<span class="nb">cd</span> <span class="nv">$1</span>
+git checkout 61cebf
+</code></pre>
+
+<p>And output:</p>
+
+<pre><code class="highlight json"><span class="p">{</span><span class="w">
+  </span><span class="s2">"version"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="s2">"ref"</span><span class="p">:</span><span class="w"> </span><span class="s2">"61cebf"</span><span class="w"> </span><span class="p">},</span><span class="w">
+  </span><span class="s2">"metadata"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
+    </span><span class="p">{</span><span class="w"> </span><span class="s2">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"commit"</span><span class="p">,</span><span class="w"> </span><span class="s2">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"61cebf"</span><span class="w"> </span><span class="p">},</span><span class="w">
+    </span><span class="p">{</span><span class="w"> </span><span class="s2">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"author"</span><span class="p">,</span><span class="w"> </span><span class="s2">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Hulk Hogan"</span><span class="w"> </span><span class="p">}</span><span class="w">
+  </span><span class="p">]</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre>
+
+<hr />
+
+<h3 id="out-update-a-resource"><code>out</code>: Update a resource.</h3>
+
+<p>The <code>out</code> script is called with a path to the directory containing the build's
+full set of sources as the first argument, and is given on stdin the configured
+params and the resource's source information. The source directory is as it was
+at the end of the build.</p>
+
+<p>The script must emit the resulting version of the resource. For example, the
+<code>git</code> resource emits the sha of the commit that it just pushed.</p>
+
+<p>Additionally, the script may emit metadata as a list of key-value pairs. This
+data is intended for public consumption and will make it upstream, intended to
+be shown on the build's page.</p>
+
+<p>Example input, in this case for the <code>git</code> resource:</p>
+
+<pre><code class="highlight json"><span class="p">{</span><span class="w">
+  </span><span class="s2">"params"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="s2">"branch"</span><span class="p">:</span><span class="w"> </span><span class="s2">"develop"</span><span class="p">,</span><span class="w">
+    </span><span class="s2">"repo"</span><span class="p">:</span><span class="w"> </span><span class="s2">"some-repo"</span><span class="w">
+  </span><span class="p">},</span><span class="w">
+  </span><span class="s2">"source"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="s2">"uri"</span><span class="p">:</span><span class="w"> </span><span class="s2">"git@..."</span><span class="p">,</span><span class="w">
+    </span><span class="s2">"private_key"</span><span class="p">:</span><span class="w"> </span><span class="s2">"..."</span><span class="w">
+  </span><span class="p">}</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre>
+
+<p>Upon receiving this payload the <code>git</code> resource would probably do something like:</p>
+
+<pre><code class="highlight shell"><span class="nb">cd</span> <span class="nv">$1</span>/some-repo
+git push origin develop
+</code></pre>
+
+<p>And output:</p>
+
+<pre><code class="highlight json"><span class="p">{</span><span class="w">
+  </span><span class="s2">"version"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="s2">"ref"</span><span class="p">:</span><span class="w"> </span><span class="s2">"61cebf"</span><span class="w"> </span><span class="p">},</span><span class="w">
+  </span><span class="s2">"metadata"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
+    </span><span class="p">{</span><span class="w"> </span><span class="s2">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"commit"</span><span class="p">,</span><span class="w"> </span><span class="s2">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"61cebf"</span><span class="w"> </span><span class="p">},</span><span class="w">
+    </span><span class="p">{</span><span class="w"> </span><span class="s2">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"author"</span><span class="p">,</span><span class="w"> </span><span class="s2">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Mick Foley"</span><span class="w"> </span><span class="p">}</span><span class="w">
+  </span><span class="p">]</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre>
+
+
+	</div>
+
+	<div id="sidebar">
+		    <ol><li class='parent'><span class='parent-label'><a href="/concepts/">Concepts</a></span><ol><li class='child'><a href="/concepts/01-builds.html">Builds</a></li><li class='child'><a href="/concepts/02-jobs.html">Jobs</a></li><li class='child active'><a href="/concepts/03-resources.html">Resources</a></li></ol></li><li class='parent'><span class='parent-label'><a href="/configuring/">Configuration</a></span><ol><li class='child'><a href="/configuring/01-builds.html">Builds</a></li><li class='child'><a href="/configuring/02-pipelines.html">Pipelines</a></li></ol></li><li class='parent'><span class='parent-label'><a href="/deploying/">Deploying</a></span><ol><li class='child'><a href="/deploying/01-vagrant.html">With Vagrant</a></li><li class='child'><a href="/deploying/02-bosh.html">With BOSH</a></li></ol></li><li class='parent'><span class='parent-label'><a href="/what-and-why/">What &amp; Why</a></span><ol><li class='child'><a href="/what-and-why/01-easy-to-learn.html">Easy to learn</a></li><li class='child'><a href="/what-and-why/02-local-iteration.html">Local iteration</a></li><li class='child'><a href="/what-and-why/03-build-isolation.html">Build isolation</a></li><li class='child'><a href="/what-and-why/04-reproducible.html">Reproducible</a></li><li class='child'><a href="/what-and-why/05-unintrusive.html">Unintrusive</a></li><li class='child'><a href="/what-and-why/06-bootstrapped.html">Bootstrapped</a></li></ol></li></ol>
+
+	</div>
+</div>
+
+  </body>
+</html>

@@ -1,0 +1,244 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+
+    <!-- Always force latest IE rendering engine or request Chrome Frame -->
+    <meta content="IE=edge,chrome=1" http-equiv="X-UA-Compatible">
+
+    <title>Concourse</title>
+
+    <link href="/stylesheets/normalize.css" rel="stylesheet" type="text/css" /><link href="/stylesheets/all.css" rel="stylesheet" type="text/css" /><link href="/stylesheets/syntax.css" rel="stylesheet" type="text/css" />
+    <script src="/javascripts/all.js" type="text/javascript"></script>
+  </head>
+  <body class="configuring configuring_02-pipelines">
+    <div id="main">
+	<div id="content">
+    
+  <h1 id="pipelines">Pipelines</h1>
+
+<p>Together, jobs, resources, and builds form a pipeline. A pipeline a
+configuration of a set of jobs and a set of resources, all interrelated.</p>
+
+<p>Here's an example of a fairly standard unit → integration → deploy
+pipeline configuration:</p>
+
+<pre><code class="highlight yaml"><span class="nn">---</span>
+<span class="s">resources</span><span class="pi">:</span>
+  <span class="pi">-</span> <span class="s">name</span><span class="pi">:</span> <span class="s">controller</span>
+    <span class="s">type</span><span class="pi">:</span> <span class="s">git</span>
+    <span class="s">source</span><span class="pi">:</span>
+      <span class="s">uri</span><span class="pi">:</span> <span class="s">git@github.com:my-org/controller.git</span>
+      <span class="s">branch</span><span class="pi">:</span> <span class="s">master</span>
+
+  <span class="pi">-</span> <span class="s">name</span><span class="pi">:</span> <span class="s">worker</span>
+    <span class="s">type</span><span class="pi">:</span> <span class="s">git</span>
+    <span class="s">source</span><span class="pi">:</span>
+      <span class="s">uri</span><span class="pi">:</span> <span class="s">git@github.com:my-org/worker.git</span>
+      <span class="s">branch</span><span class="pi">:</span> <span class="s">master</span>
+
+  <span class="pi">-</span> <span class="s">name</span><span class="pi">:</span> <span class="s">integration-suite</span>
+    <span class="s">type</span><span class="pi">:</span> <span class="s">git</span>
+    <span class="s">source</span><span class="pi">:</span>
+      <span class="s">uri</span><span class="pi">:</span> <span class="s">git@github.com:my-org/integration-suite.git</span>
+      <span class="s">branch</span><span class="pi">:</span> <span class="s">master</span>
+
+  <span class="pi">-</span> <span class="s">name</span><span class="pi">:</span> <span class="s">release</span>
+    <span class="s">type</span><span class="pi">:</span> <span class="s">git</span>
+    <span class="s">source</span><span class="pi">:</span>
+      <span class="s">uri</span><span class="pi">:</span> <span class="s">git@github.com:my-org/release.git</span>
+      <span class="s">branch</span><span class="pi">:</span> <span class="s">master</span>
+
+  <span class="pi">-</span> <span class="s">name</span><span class="pi">:</span> <span class="s">final-release</span>
+    <span class="s">type</span><span class="pi">:</span> <span class="s">s3</span>
+    <span class="s">source</span><span class="pi">:</span>
+      <span class="s">bucket</span><span class="pi">:</span> <span class="s">concourse-releases</span>
+      <span class="s">regex</span><span class="pi">:</span> <span class="s">release-(.*).tgz</span>
+
+<span class="s">jobs</span><span class="pi">:</span>
+  <span class="pi">-</span> <span class="s">name</span><span class="pi">:</span> <span class="s">controller-mysql</span>
+    <span class="s">build</span><span class="pi">:</span> <span class="s">controller/ci/mysql.yml</span>
+    <span class="s">inputs</span><span class="pi">:</span>
+      <span class="pi">-</span> <span class="s">resource</span><span class="pi">:</span> <span class="s">controller</span>
+
+  <span class="pi">-</span> <span class="s">name</span><span class="pi">:</span> <span class="s">controller-postgres</span>
+    <span class="s">build</span><span class="pi">:</span> <span class="s">controller/ci/postgres.yml</span>
+    <span class="s">inputs</span><span class="pi">:</span>
+      <span class="pi">-</span> <span class="s">resource</span><span class="pi">:</span> <span class="s">controller</span>
+
+  <span class="pi">-</span> <span class="s">name</span><span class="pi">:</span> <span class="s">worker</span>
+    <span class="s">build</span><span class="pi">:</span> <span class="s">worker/build.yml</span>
+    <span class="s">inputs</span><span class="pi">:</span>
+      <span class="pi">-</span> <span class="s">resource</span><span class="pi">:</span> <span class="s">worker</span>
+
+  <span class="pi">-</span> <span class="s">name</span><span class="pi">:</span> <span class="s">integration</span>
+    <span class="s">build</span><span class="pi">:</span> <span class="s">intregation-suite/build.yml</span>
+    <span class="s">inputs</span><span class="pi">:</span>
+      <span class="pi">-</span> <span class="s">resource</span><span class="pi">:</span> <span class="s">integration-suite</span>
+      <span class="pi">-</span> <span class="s">resource</span><span class="pi">:</span> <span class="s">controller</span>
+        <span class="s">passed</span><span class="pi">:</span> <span class="pi">[</span><span class="nv">controller-mysql</span><span class="pi">,</span> <span class="nv">controller-postgres</span><span class="pi">]</span>
+      <span class="pi">-</span> <span class="s">resource</span><span class="pi">:</span> <span class="s">worker</span>
+        <span class="s">passed</span><span class="pi">:</span> <span class="pi">[</span><span class="nv">worker</span><span class="pi">]</span>
+
+  <span class="pi">-</span> <span class="s">name</span><span class="pi">:</span> <span class="s">deploy</span>
+    <span class="s">build</span><span class="pi">:</span> <span class="s">release/ci/deploy.yml</span>
+    <span class="s">serial</span><span class="pi">:</span> <span class="s">true</span>
+    <span class="s">inputs</span><span class="pi">:</span>
+      <span class="pi">-</span> <span class="s">resource</span><span class="pi">:</span> <span class="s">release</span>
+      <span class="pi">-</span> <span class="s">resource</span><span class="pi">:</span> <span class="s">controller</span>
+        <span class="s">passed</span><span class="pi">:</span> <span class="pi">[</span><span class="nv">integration</span><span class="pi">]</span>
+      <span class="pi">-</span> <span class="s">resource</span><span class="pi">:</span> <span class="s">worker</span>
+        <span class="s">passed</span><span class="pi">:</span> <span class="pi">[</span><span class="nv">integration</span><span class="pi">]</span>
+    <span class="s">outputs</span><span class="pi">:</span>
+      <span class="pi">-</span> <span class="s">resource</span><span class="pi">:</span> <span class="s">final-release</span>
+        <span class="s">params</span><span class="pi">:</span>
+          <span class="s">from</span><span class="pi">:</span> <span class="s">release/build/*.tgz</span>
+</code></pre>
+
+<p>Rendered by Concourse, this would look like:</p>
+
+<p><img alt="" src="/images/example-pipeline.png" /></p>
+
+<p>To learn what the heck that means, read on.</p>
+
+<hr />
+
+<h1 id="configuring-resources">Configuring Resources</h1>
+
+<p>Resources are configured as a list of objects under <code>resources</code> at the top
+level, each with the following values:</p>
+
+<ul>
+  <li>
+    <p><code>name</code>: <em>Required.</em> The name of the resource. This should be short and simple,
+for example the name of the repo.</p>
+  </li>
+  <li>
+    <p><code>type</code>: <em>Required.</em> The type of the resource. This maps to a container image
+configured by your workers for the given type.</p>
+  </li>
+  <li>
+    <p><code>source</code>: <em>Optional.</em> The location of the resource. This varies by resource
+type, and is a black box to Concourse; it is simply passed to the resource at
+runtime. For example, this may describe where your Git repo lives, and which
+branch to pull down, and a private key to use for pushing/pulling.</p>
+  </li>
+</ul>
+
+<p>Note that this is fairly open-ended; the documentation for what can be included
+in <code>source</code> is left to the individual resources.</p>
+
+<hr />
+
+<h1 id="configuring-jobs">Configuring Jobs</h1>
+
+<p>A job configures the superset of a build configuration, describing which
+resources to fetch and trigger the build by, which resources to have as outputs
+of a successful build, and various other knobs.</p>
+
+<p>Jobs are configured as a list of objects under <code>jobs</code> at the toplevel. Each
+object has the following attributes:</p>
+
+<ul>
+  <li>
+    <p><code>name</code>: <em>Required.</em> The name of the job. This should be short; it will show up
+in URLs.</p>
+  </li>
+  <li>
+    <p><code>build</code> or <code>config</code>: <em>Required.</em> The configuration for the build's running
+environment.  <code>build</code> points at a <code>.yml</code> file containing the config, which
+allows this to be tracked with your resources. <code>config</code> can be defined to
+inline the same configuration.</p>
+  </li>
+  <li>
+    <p><code>inputs</code>: <em>Optional.</em> Resources that should be available to the build. By
+default, when new versions of any of them are detected, a new build of the job
+is triggered. See <a href="/concepts/jobs/02-inputs.html">Inputs</a>.</p>
+  </li>
+  <li>
+    <p><code>outputs</code>: <em>Optional.</em> Resources that have new versions generated upon
+successful completion of this job's builds. For example, you may want to push
+commits to a different branch, or update code coverage reports, or mark tasks
+finished. See <a href="/concepts/jobs/02-ouputs.html">Outputs</a>.</p>
+  </li>
+  <li>
+    <p><code>serial</code>: <em>Optional. Default <code>false</code>.</em> If set to <code>true</code>, builds will queue up
+and execute one-by-one, rather than executing in parallel.</p>
+  </li>
+  <li>
+    <p><code>privileged</code>: <em>Optional. Default <code>false</code>.</em> If set to <code>true</code>, builds will run
+as <code>root</code>. This is not part of the build configuration to prevent privilege
+escalation via pull requests. This is a gaping security hole; use wisely.</p>
+  </li>
+</ul>
+
+<h2 id="inputs">Inputs</h2>
+
+<p>A job's <code>inputs</code> each contain the following configuration:</p>
+
+<ul>
+  <li>
+    <p><code>resource</code>: <em>Required.</em> The resource to pull down, as described in <code>resources</code>
+next to the full <code>jobs</code> configuration.</p>
+  </li>
+  <li>
+    <p><code>passed</code>: <em>Optional.</em> When configured, only the versions of the resource that
+appear as outputs of the given list of jobs will be considered for inputs to
+this job.</p>
+
+    <p>Note that if multiple inputs are configured with <code>passed</code> constraints, all of
+the mentioned jobs are correlated. That is, with the following set of inputs:</p>
+
+<pre><code class="highlight yaml"><span class="s">inputs</span><span class="pi">:</span>
+<span class="pi">-</span> <span class="s">resource</span><span class="pi">:</span> <span class="s">a</span>
+  <span class="s">passed</span><span class="pi">:</span> <span class="pi">[</span><span class="nv">a-unit</span><span class="pi">,</span> <span class="nv">integration</span><span class="pi">]</span>
+<span class="pi">-</span> <span class="s">resource</span><span class="pi">:</span> <span class="s">b</span>
+  <span class="s">passed</span><span class="pi">:</span> <span class="pi">[</span><span class="nv">b-unit</span><span class="pi">,</span> <span class="nv">integration</span><span class="pi">]</span>
+<span class="pi">-</span> <span class="s">resource</span><span class="pi">:</span> <span class="s">x</span>
+  <span class="s">passed</span><span class="pi">:</span> <span class="pi">[</span><span class="nv">integration</span><span class="pi">]</span>
+</code></pre>
+
+    <p>This means "give me the versions of <code>a</code>, <code>b</code>, and <code>x</code> that have passed the
+<em>same build</em> of <code>integration</code>, with the same version of <code>a</code> passing <code>a-unit</code>
+and the same version of <code>b</code> passing <code>b-unit</code>."</p>
+
+    <p>This is crucial to being able to implement safe "fan-in" semantics as things
+progress through a pipeline.</p>
+  </li>
+  <li>
+    <p><code>params</code>: <em>Optional.</em> A map of arbitrary configuration to forward to the
+resource's <code>in</code> script.</p>
+  </li>
+  <li>
+    <p><code>dont_check</code>: <em>Optional.</em> Setting this to <code>true</code> will ensure that the job is
+not auto-triggered when this input's resource is the only thing that has
+changed.</p>
+  </li>
+</ul>
+
+<h2 id="outputs">Outputs</h2>
+
+<p>A job's <code>outputs</code> each contain the following configuration:</p>
+
+<ul>
+  <li>
+    <p><code>resource</code>: <em>Required.</em> The resource to perform the output on (think push
+target).</p>
+  </li>
+  <li>
+    <p><code>params</code>: <em>Optional.</em> A map of arbitrary configuration to forward to the
+resource's <code>out</code> script.</p>
+  </li>
+</ul>
+
+
+	</div>
+
+	<div id="sidebar">
+		    <ol><li class='parent'><span class='parent-label'><a href="/concepts/">Concepts</a></span><ol><li class='child'><a href="/concepts/01-builds.html">Builds</a></li><li class='child'><a href="/concepts/02-jobs.html">Jobs</a></li><li class='child'><a href="/concepts/03-resources.html">Resources</a></li></ol></li><li class='parent'><span class='parent-label'><a href="/configuring/">Configuration</a></span><ol><li class='child'><a href="/configuring/01-builds.html">Builds</a></li><li class='child active'><a href="/configuring/02-pipelines.html">Pipelines</a></li></ol></li><li class='parent'><span class='parent-label'><a href="/deploying/">Deploying</a></span><ol><li class='child'><a href="/deploying/01-vagrant.html">With Vagrant</a></li><li class='child'><a href="/deploying/02-bosh.html">With BOSH</a></li></ol></li><li class='parent'><span class='parent-label'><a href="/what-and-why/">What &amp; Why</a></span><ol><li class='child'><a href="/what-and-why/01-easy-to-learn.html">Easy to learn</a></li><li class='child'><a href="/what-and-why/02-local-iteration.html">Local iteration</a></li><li class='child'><a href="/what-and-why/03-build-isolation.html">Build isolation</a></li><li class='child'><a href="/what-and-why/04-reproducible.html">Reproducible</a></li><li class='child'><a href="/what-and-why/05-unintrusive.html">Unintrusive</a></li><li class='child'><a href="/what-and-why/06-bootstrapped.html">Bootstrapped</a></li></ol></li></ol>
+
+	</div>
+</div>
+
+  </body>
+</html>

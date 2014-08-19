@@ -1,0 +1,86 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+
+    <!-- Always force latest IE rendering engine or request Chrome Frame -->
+    <meta content="IE=edge,chrome=1" http-equiv="X-UA-Compatible">
+
+    <title>Concourse</title>
+
+    <link href="/stylesheets/normalize.css" rel="stylesheet" type="text/css" /><link href="/stylesheets/all.css" rel="stylesheet" type="text/css" /><link href="/stylesheets/syntax.css" rel="stylesheet" type="text/css" />
+    <script src="/javascripts/all.js" type="text/javascript"></script>
+  </head>
+  <body class="concepts concepts_02-jobs">
+    <div id="main">
+	<div id="content">
+    
+  <h1 id="jobs">Jobs</h1>
+
+<p>A job is a specification of a <a href="/concepts/01-builds.html">Build</a> to run, combined
+with inputs to pull down, and outputs to push up upon the build's successful
+completion.</p>
+
+<h2 id="inputs">Inputs</h2>
+
+<p>New builds of the job will automatically trigger when any of its inputs change.
+Jobs can be interconnected by applying <code>passed</code> constraints to the inputs
+resources - this is the crucial piece that allows pipelines to function.</p>
+
+<p>Inputs can be thought of as the arguments to a function, your build.
+Concourse's job is to find which sets of arguments are OK, and which sets of
+arguments are not OK.</p>
+
+<p>The notion of a pipeline is introduced when wanting to restrict the potential
+set of arguments to ones that are more likely to work, as their values progress
+through a sequence of successful builds.</p>
+
+<p>For example, if a component's unit tests fail, it's usually less interesting to
+see if the integration tests pass, or if you can automatically go to prod with
+it anyway.</p>
+
+<p>A job's set of inputs can be configured to apply these constraints via the
+<code>passed</code> option. This is described below, along with the rest of the possible
+configuration.</p>
+
+<h1 id="outputs">Outputs</h1>
+
+<p>When a build succeeds, all of the resource versions used as inputs are
+implicitly recorded as outputs of the job.</p>
+
+<p>A job may however configure explicit outputs, which add to the output set,
+overriding existing implicit versions.</p>
+
+<p>For example, a job may pull in a repo that contains a <code>Dockerfile</code>, and push a
+Docker image when its tests go green:</p>
+
+<pre><code class="highlight yaml"><span class="s">jobs</span><span class="pi">:</span>
+  <span class="pi">-</span> <span class="s">name</span><span class="pi">:</span> <span class="s">git-resource-image</span>
+    <span class="s">build</span><span class="pi">:</span> <span class="s">git-resource/unit-tests.yml</span>
+    <span class="s">inputs</span><span class="pi">:</span>
+      <span class="pi">-</span> <span class="s">resource</span><span class="pi">:</span> <span class="s">git-resource</span>
+    <span class="s">outputs</span><span class="pi">:</span>
+      <span class="pi">-</span> <span class="s">resource</span><span class="pi">:</span> <span class="s">git-resource-image</span>
+        <span class="s">params</span><span class="pi">:</span>
+          <span class="s">build</span><span class="pi">:</span> <span class="s">git-resource</span>
+</code></pre>
+
+<p>When builds complete, all outputs are executed in parallel (as they should have
+no inter-relationships). If any outputs fail to execute, the build errors
+(overriding the otherwise successful status).</p>
+
+<p>Outputs can be used to do all kinds of things, from bumping version numbers, to
+pushing to repos, to marking tasks as finished in your issue tracking system.
+These are all modeled as <a href="/concepts/resources">Resources</a>.</p>
+
+
+	</div>
+
+	<div id="sidebar">
+		    <ol><li class='parent'><span class='parent-label'><a href="/concepts/">Concepts</a></span><ol><li class='child'><a href="/concepts/01-builds.html">Builds</a></li><li class='child active'><a href="/concepts/02-jobs.html">Jobs</a></li><li class='child'><a href="/concepts/03-resources.html">Resources</a></li></ol></li><li class='parent'><span class='parent-label'><a href="/configuring/">Configuration</a></span><ol><li class='child'><a href="/configuring/01-builds.html">Builds</a></li><li class='child'><a href="/configuring/02-pipelines.html">Pipelines</a></li></ol></li><li class='parent'><span class='parent-label'><a href="/deploying/">Deploying</a></span><ol><li class='child'><a href="/deploying/01-vagrant.html">With Vagrant</a></li><li class='child'><a href="/deploying/02-bosh.html">With BOSH</a></li></ol></li><li class='parent'><span class='parent-label'><a href="/what-and-why/">What &amp; Why</a></span><ol><li class='child'><a href="/what-and-why/01-easy-to-learn.html">Easy to learn</a></li><li class='child'><a href="/what-and-why/02-local-iteration.html">Local iteration</a></li><li class='child'><a href="/what-and-why/03-build-isolation.html">Build isolation</a></li><li class='child'><a href="/what-and-why/04-reproducible.html">Reproducible</a></li><li class='child'><a href="/what-and-why/05-unintrusive.html">Unintrusive</a></li><li class='child'><a href="/what-and-why/06-bootstrapped.html">Bootstrapped</a></li></ol></li></ol>
+
+	</div>
+</div>
+
+  </body>
+</html>
