@@ -11,21 +11,32 @@
     <link href="/stylesheets/normalize.css" rel="stylesheet" type="text/css" /><link href="/stylesheets/all.css" rel="stylesheet" type="text/css" /><link href="/stylesheets/syntax.css" rel="stylesheet" type="text/css" />
     <script src="/javascripts/all.js" type="text/javascript"></script>
   </head>
-  <body class="configuring configuring_01-builds">
+  <body class="configuring configuring_01-single-builds">
     <div id="main">
 	<div id="content">
     
-  <h1 id="builds">Builds</h1>
+  <h1 id="single-builds">Single Builds</h1>
+
+<p>The smallest configurable unit in Concourse is a single build.</p>
 
 <p>Conventionally a build's configuration is placed in the root of a repo as
 <code>build.yml</code>. It may look something like:</p>
 
-<pre><code class="highlight yaml"><span class="nn">---</span>
-<span class="s">image</span><span class="pi">:</span> <span class="s">docker:///concourse/concourse-ci</span>
-
+<pre><code class="highlight yaml"><span class="s">image</span><span class="pi">:</span> <span class="s">docker:///ubuntu#14.04</span>
 <span class="s">run</span><span class="pi">:</span>
   <span class="s">path</span><span class="pi">:</span> <span class="s">my-repo/scripts/test</span>
 </code></pre>
+
+<p>This configuration specifies that the build must run with the <code>ubuntu:14.04</code>
+Docker image, and run the script <code>my-repo/scripts/test</code>.</p>
+
+<p>Builds can be executed locally with the <a href="/components/fly">Fly</a> commandline tool.
+This enables you to run builds on your development machine exactly the same way
+your CI runs it (assuming your CI points at the same build <code>.yml</code> config).</p>
+
+<p>If you have an existing CI deployment, you can use Fly in combination with it,
+to at least get the containerization and local development features without a
+drastic change to your CI infrastructure.</p>
 
 <p>A build's configuration specifies the following:</p>
 
@@ -60,7 +71,7 @@ to put them in a <code>$GOPATH</code> structure.</p>
 	</div>
 
 	<div id="sidebar">
-		    <ol><li class='child'><a href="/01-what-and-why.html">What &amp; Why</a></li><li class='parent'><span class='parent-label'><a href="/concepts/">Concepts</a></span><ol><li class='child'><a href="/concepts/01-builds.html">Builds</a></li><li class='child'><a href="/concepts/02-jobs.html">Jobs</a></li><li class='child'><a href="/concepts/03-resources.html">Resources</a></li></ol></li><li class='parent'><span class='parent-label'><a href="/configuring/">Configuring</a></span><ol><li class='child active'><a href="/configuring/01-builds.html">Builds</a></li><li class='child'><a href="/configuring/02-pipelines.html">Pipelines</a></li></ol></li><li class='parent'><span class='parent-label'><a href="/deploying/">Deploying</a></span><ol><li class='child'><a href="/deploying/01-vagrant.html">With Vagrant</a></li><li class='child'><a href="/deploying/02-bosh.html">With BOSH</a></li></ol></li></ol>
+		    <ol><li class='child'><a href="/01-what-and-why.html">What &amp; Why</a></li><li class='parent'><span class='parent-label'><a href="/concepts/">Concepts</a></span><ol><li class='child'><a href="/concepts/01-builds.html">Builds</a></li><li class='child'><a href="/concepts/02-jobs.html">Jobs</a></li><li class='child'><a href="/concepts/03-resources.html">Resources</a></li></ol></li><li class='parent'><span class='parent-label'><a href="/configuring/">Configuring</a></span><ol><li class='child active'><a href="/configuring/01-single-builds.html">Single Builds</a></li><li class='child'><a href="/configuring/02-pipelines.html">Pipelines</a></li></ol></li><li class='parent'><span class='parent-label'><a href="/deploying/">Deploying</a></span><ol><li class='child'><a href="/deploying/01-vagrant.html">With Vagrant</a></li><li class='child'><a href="/deploying/02-bosh.html">With BOSH</a></li></ol></li></ol>
 
 	</div>
 </div>
