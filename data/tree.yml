@@ -5,7 +5,7 @@ concepts:
   02-jobs.html.markdown: /concepts/02-jobs.html.markdown
   03-resources.html.markdown: /concepts/03-resources.html.markdown
 configuring:
-  01-builds.html.markdown: /configuring/01-builds.html.markdown
+  01-single-builds.html.markdown: /configuring/01-single-builds.html.markdown
   02-pipelines.html.markdown: /configuring/02-pipelines.html.markdown
 deploying:
   01-vagrant.html.markdown: /deploying/01-vagrant.html.markdown

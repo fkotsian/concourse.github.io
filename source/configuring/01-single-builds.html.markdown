@@ -2,18 +2,29 @@
 layout: docs
 ---
 
-# Builds
+# Single Builds
+
+The smallest configurable unit in Concourse is a single build.
 
 Conventionally a build's configuration is placed in the root of a repo as
 `build.yml`. It may look something like:
 
 ~~~ yaml
----
-image: docker:///concourse/concourse-ci
-
+image: docker:///ubuntu#14.04
 run:
   path: my-repo/scripts/test
 ~~~
+
+This configuration specifies that the build must run with the `ubuntu:14.04`
+Docker image, and run the script `my-repo/scripts/test`.
+
+Builds can be executed locally with the [Fly](/components/fly) commandline tool.
+This enables you to run builds on your development machine exactly the same way
+your CI runs it (assuming your CI points at the same build `.yml` config).
+
+If you have an existing CI deployment, you can use Fly in combination with it,
+to at least get the containerization and local development features without a
+drastic change to your CI infrastructure.
 
 A build's configuration specifies the following:
 

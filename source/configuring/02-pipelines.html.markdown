@@ -11,7 +11,6 @@ Here's an example of a fairly standard unit &rarr; integration &rarr; deploy
 pipeline configuration:
 
 ~~~ yaml
----
 resources:
   - name: controller
     type: git
